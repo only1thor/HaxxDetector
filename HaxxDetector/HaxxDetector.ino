@@ -24,8 +24,8 @@ Adafruit_NeoPixel pixels {1, D8, NEO_GRB + NEO_KHZ800 }; // initialize 1 NeoPixe
 SH1106Wire display(0x3c, D2, D1); // initialize OLED on I2C pins
 OLEDDisplayUi ui     ( &display );
 
-#define BTN_UP 6    // pin for button up
-#define BTN_DOWN 3  // pin for button down
+const byte BTN_UP = 6;    // pin for button up
+const byte BTN_DOWN = 3;  // pin for button down
 
 extern "C" {
 #include "user_interface.h"
@@ -39,7 +39,7 @@ int attack_counter { 0 };
 unsigned long update_time { 0 };  
 unsigned long ch_time { 0 };
 
-unsigned int brightness = 10;
+volatile unsigned int brightness = 10;
 
 void sniffer(uint8_t *buf, uint16_t len) {
   if (!buf || len < 28) return;
@@ -64,7 +64,20 @@ void attack_stopped() {
   displayAliveNugg();
 }
 
+void increase_brightness() {
+  brightness += 10;
+}
+
+void decrease_brightness() {
+  brightness -= 10;
+}
+
 void setup() {
+  pinMode(BTN_UP, INPUT_PULLUP);    // initialize button up
+  pinMode(BTN_DOWN, INPUT_PULLUP);  // initialize button down
+
+  attachInterrupt(digitalPinToInterrupt(BTN_UP), increase_brightness, CHANGE); // set up interrupt for brightness up
+  attachInterrupt(digitalPinToInterrupt(BTN_DOWN), decrease_brightness, CHANGE); // set up interrupt for brightness down
 
   Serial.begin(115200);           // initialize serial communication
   pixels.begin(); pixels.clear(); // initialize NeoPixel
